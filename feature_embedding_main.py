@@ -85,10 +85,10 @@ if __name__ == '__main__':
     t = time.time()
     if FLAGS.bNoColor:
         print('ScanNetSLAM, WITHOUT color')
-        chosen_log = 'results/Log_2021-06-16_02-31-04'  # => ScanNetSLAM (full), w/o color, batch 8, 1st feat 64, 0.04-2.0
+        chosen_log = 'results/prev/Log_2021-06-16_02-31-04'  # => ScanNetSLAM (full), w/o color, batch 8, 1st feat 64, 0.04-2.0
     else:
         print('ScanNetSLAM, WITH color')
-        chosen_log = 'results/Log_2021-06-16_02-42-30'  # => ScanNetSLAM (full), with color, batch 8, 1st feat 64, 0.04-2.0
+        chosen_log = 'results/prev/Log_2021-06-16_02-42-30'  # => ScanNetSLAM (full), with color, batch 8, 1st feat 64, 0.04-2.0
     # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
     chkp_idx = 0 # chkp_500
     # print('Loading pre-trained segmentation KP-FCNN from', chosen_log, 'chkp_idx=', chkp_idx)
