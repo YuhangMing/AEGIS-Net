@@ -951,7 +951,7 @@ class ScannetTripleSampler(Sampler):
         # Previously saved calibration
         ##############################
 
-        print('\nStarting Calibration (use verbose=True for more details)')
+        print('Starting Calibration')
         t0 = time.time()
 
         redo = force_redo
@@ -1209,7 +1209,7 @@ class ScannetTripleSampler(Sampler):
                 pickle.dump(neighb_lim_dict, file)
 
 
-        print('Calibration done in {:.1f}s\n'.format(time.time() - t0))
+        print('Calibration done in {:.1f}s'.format(time.time() - t0))
         return
 
 

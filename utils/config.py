@@ -398,7 +398,7 @@ class Config:
             text_file.write('num_neg_samples = {:d}\n'.format(self.num_neg_samples))
 
     def print_current(self):
-        print('\n# -----------------------------------#')
+        print('# -----------------------------------#')
         print('# Parameters of the training session #')
         print('# -----------------------------------#')
 
@@ -504,7 +504,7 @@ class Config:
         print('KPlog = {:s}'.format(self.KPlog))
         print('num_feat = {:d}'.format(self.num_feat))
         print('optimiser = {:s}'.format(self.optimiser))
-        print('loss_function = {:s}\n'.format(self.loss))
-        print('num_neg_samples = {:d}\n'.format(self.num_neg_samples))
-        print('# -----------------------------------#\n')
+        print('loss_function = {:s}'.format(self.loss))
+        print('num_neg_samples = {:d}'.format(self.num_neg_samples))
+        print('# -----------------------------------#')
 

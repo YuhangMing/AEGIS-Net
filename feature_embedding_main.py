@@ -61,13 +61,17 @@ if __name__ == '__main__':
     parser.add_argument('--evaluate', dest='bEVAL', action='store_true', help='Set to evaluate the VLAD results')
     parser.add_argument('--visualise', dest='bVISUAL', action='store_true', help='Set to visualise the VLAD results')
     FLAGS=parser.parse_args()
+    print('\n----------------------------------------')
     if FLAGS.bTRAIN:
         print('Training parameters:')
         print('Optimiser:', FLAGS.optimiser)
         print('Number of features:', FLAGS.num_feat)
+        print('Use color information:', not FLAGS.bNoColor)
     else:
         print('Testing parameters load from files.')
         print('Evaluation:', FLAGS.bEVAL)
+        print('Number of features:', FLAGS.num_feat)
+        print('Use color information:', FLAGS.bNoColor)
         print('Visualisation:', FLAGS.bVISUAL)
 
     ######################
@@ -75,8 +79,7 @@ if __name__ == '__main__':
     # SEGMENTATION NETWORK
     ######################
 
-    print('\nLoad pre-trained segmentation KP-FCNN')
-    print('*************************************')
+    print('\n----------------------------------------')
     t = time.time()
     if FLAGS.bNoColor:
         print('ScanNetSLAM, WITHOUT color')
@@ -86,12 +89,12 @@ if __name__ == '__main__':
         chosen_log = 'results/Log_2021-06-16_02-42-30'  # => ScanNetSLAM (full), with color, batch 8, 1st feat 64, 0.04-2.0
     # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
     chkp_idx = 0 # chkp_500
-    print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
+    # print('Loading pre-trained segmentation KP-FCNN from', chosen_log, 'chkp_idx=', chkp_idx)
 
     # Find all checkpoints in the chosen training folder
     chkp_path = os.path.join(chosen_log, 'checkpoints')
     chkps = [f for f in os.listdir(chkp_path) if f[:4] == 'chkp']
-    print('Checkpoints found:', chkps)
+    print('Found checkpoint(s):', chkps)
     # print(np.sort(chkps)) # sort string in alphbatic order
 
     # Find which snapshot to restore
@@ -100,11 +103,11 @@ if __name__ == '__main__':
     else:
         chosen_chkp = np.sort(chkps)[chkp_idx]
     chosen_chkp = os.path.join(chosen_log, 'checkpoints', chosen_chkp)
-    print('Checkpoints chosen:', chosen_chkp)
+    print('Loading Checkpoint:', chosen_chkp)
 
     # Initialise and Load the segmentation network configs
     config = Config()
-    config.load(chosen_log)
+    config.load(chosen_log) # update config file
     config.KPlog = chosen_chkp
     # Change parameters for the TESTing here. 
     # For example, you can stop augmenting the input data.
@@ -146,14 +149,15 @@ if __name__ == '__main__':
     # the model. This sets self.training to False for every module in the model. 
     seg_net.eval()
     
-    print("SEGMENTATION model and training state restored with", epoch, "epoches trained.")
-    print('Done in {:.1f}s\n'.format(time.time() - t))
+    print("SEGMENTATION model and training states restored with", epoch+1, "epoches trained.")
+    print('Done in {:.1f}s'.format(time.time() - t))
 
     ###########################
     # TRAIN RECOGNITION NETWORK
     ###########################
+    print('\n----------------------------------------')
     if FLAGS.bTRAIN:
-        print('\nTRAINING VLAD Layer...\n')
+        print('Training NETVLAD Layer...')
 
         # update parameters for recog training
         config.num_feat = FLAGS.num_feat
@@ -186,8 +190,8 @@ if __name__ == '__main__':
         print('        weight_decay =', config.weight_decay)
         print('        saving_path =', config.saving_path)
 
-        print('\nData Preparation')
-        print('****************')
+        print('\n****************')
+        print('Data Preparation')
         t = time.time()
         # new dataset for triplet input
         train_dataset = ScannetTripleDataset(config, 'training', balance_classes=False)
@@ -207,14 +211,15 @@ if __name__ == '__main__':
 
         # Calibrate samplers
         train_sampler.calibration(train_loader, verbose=True)
-        # val_sampler.calibration(val_loader, verbose=True)
-        print('Calibed batch limit:', train_sampler.dataset.batch_limit)
-        print('Calibed neighbor limit:', train_sampler.dataset.neighborhood_limits)
-        print('Done in {:.1f}s\n'.format(time.time() - t))
+        # # val_sampler.calibration(val_loader, verbose=True)
+        # print('Calibed batch limit:', train_sampler.dataset.batch_limit)
+        # print('Calibed neighbor limit:', train_sampler.dataset.neighborhood_limits)
+        print('Data preparation done in {:.1f}s'.format(time.time() - t))
 
         
-        print('\nPrepare Recognition Model')
-        print('*************************')
+        print('\n*************************')
+        print('Recognition Model Preparation')
+        t = time.time()
         reg_net = PRNet(config)
         # for k, v in reg_net.named_parameters():
         #     print(k, v)
@@ -239,14 +244,12 @@ if __name__ == '__main__':
         else:
             chosen_chkp = None
 
-
-        print('\nPrepare Trainer')
-        print('***************')
         # initialise trainier
         trainer = RecogModelTrainer(reg_net, config, chkp_path=chosen_chkp)
+        print('Model preparation done in {:.1f}s'.format(time.time() - t))
         
-        print('\nStart training')
-        print('**************')
+        print('\n**************')
+        print('Start training')
         # TRAINING
         trainer.train(reg_net, seg_net, train_loader, config)
         print('Forcing exit now')
