@@ -67,11 +67,13 @@ if __name__ == '__main__':
         print('Optimiser:', FLAGS.optimiser)
         print('Number of features:', FLAGS.num_feat)
         print('Use color information:', not FLAGS.bNoColor)
+        print('Loss function:', FLAGS.loss)
     else:
         print('Testing parameters load from files.')
         print('Evaluation:', FLAGS.bEVAL)
         print('Number of features:', FLAGS.num_feat)
         print('Use color information:', FLAGS.bNoColor)
+        print('Loss function:', FLAGS.loss)
         print('Visualisation:', FLAGS.bVISUAL)
 
     ######################
