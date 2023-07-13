@@ -1,0 +1,25 @@
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Current SDK version is 0.15.5
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Configure stats pid to 2337606
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Loading settings from /home/yohann/.config/wandb/settings
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Loading settings from /home/yohann/Code/place_recognition/ACGiS-Net/wandb/settings
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'feature_embedding_main.py', 'program': '/home/yohann/Code/place_recognition/ACGiS-Net/feature_embedding_main.py'}
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:_log_setup():507] Logging user logs to /home/yohann/Code/place_recognition/ACGiS-Net/wandb/run-20230713_125030-qmnip2mp/logs/debug.log
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:_log_setup():508] Logging internal logs to /home/yohann/Code/place_recognition/ACGiS-Net/wandb/run-20230713_125030-qmnip2mp/logs/debug-internal.log
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:init():547] calling init triggers
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:init():554] wandb.init called with sweep_config: {}
+config: {'learning_rate': 0.0001, 'epochs': 30, 'weight_decay': 0.001}
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:init():596] starting backend
+2023-07-13 12:50:30,381 INFO    MainThread:2337606 [wandb_init.py:init():600] setting up manager
+2023-07-13 12:50:30,382 INFO    MainThread:2337606 [backend.py:_multiprocessing_setup():106] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2023-07-13 12:50:30,383 INFO    MainThread:2337606 [wandb_init.py:init():606] backend started and connected
+2023-07-13 12:50:30,384 INFO    MainThread:2337606 [wandb_init.py:init():705] updated telemetry
+2023-07-13 12:50:30,424 INFO    MainThread:2337606 [wandb_init.py:init():738] communicating run to backend with 60.0 second timeout
+2023-07-13 12:50:38,901 INFO    MainThread:2337606 [wandb_run.py:_on_init():2173] communicating current version
+2023-07-13 12:50:43,903 INFO    MainThread:2337606 [wandb_run.py:_on_init():2182] got version response 
+2023-07-13 12:50:43,903 INFO    MainThread:2337606 [wandb_init.py:init():789] starting run threads in backend
+2023-07-13 12:50:48,133 INFO    MainThread:2337606 [wandb_run.py:_console_start():2152] atexit reg
+2023-07-13 12:50:48,133 INFO    MainThread:2337606 [wandb_run.py:_redirect():2007] redirect: SettingsConsole.WRAP_RAW
+2023-07-13 12:50:48,133 INFO    MainThread:2337606 [wandb_run.py:_redirect():2072] Wrapping output streams.
+2023-07-13 12:50:48,133 INFO    MainThread:2337606 [wandb_run.py:_redirect():2097] Redirects installed.
+2023-07-13 12:50:48,134 INFO    MainThread:2337606 [wandb_init.py:init():830] run started, returning control to user process

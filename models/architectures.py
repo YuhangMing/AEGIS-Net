@@ -357,7 +357,7 @@ class KPFCNN(nn.Module):
         previous_x = x
         for block_i, block_op in enumerate(self.encoder_blocks):
             x = block_op(x, batch)
-            # print(block_i, 'layer:', x.size())
+            # print(block_i, 'layer:', x.size(), previous_num)
             if x.size(0) != previous_num:
                 intermediate_features += [previous_x]
                 previous_num = x.size(0)

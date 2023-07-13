@@ -24,6 +24,7 @@ from datasets.ScannetTriple import *
 
 from models.architectures import KPFCNN
 from models.PRNet import PRNet
+from models.TransPRNet import TransPRNet
 from utils.config import Config
 from utils.trainer import RecogModelTrainer
 
@@ -222,7 +223,8 @@ if __name__ == '__main__':
         print('\n*************************')
         print('Recognition Model Preparation')
         t = time.time()
-        reg_net = PRNet(config)
+        # reg_net = PRNet(config)
+        reg_net = TransPRNet(config)
         # for k, v in reg_net.named_parameters():
         #     print(k, v)
         # print(reg_net.named_parameters())

@@ -1,0 +1,40 @@
+num_centers = 38500
+epoch_inds: tensor([24676, 29755,  1005,  ...,    -1,    -1,    -1])
+e000-i0000 => L=0.738 / t(s): batch=0.879 extract=0.610 vlad=0.054 loss=0.025 optim=0.199
+e000-i0002 => L=0.762 / t(s): batch=0.535 extract=0.044 vlad=0.068 loss=0.031 optim=0.240
+e000-i0003 => L=0.474 / t(s): batch=0.536 extract=0.044 vlad=0.087 loss=0.030 optim=0.241
+e000-i0005 => L=0.608 / t(s): batch=0.517 extract=0.042 vlad=0.077 loss=0.029 optim=0.225
+e000-i0007 => L=0.559 / t(s): batch=0.507 extract=0.042 vlad=0.071 loss=0.030 optim=0.220
+e000-i0009 => L=0.743 / t(s): batch=0.505 extract=0.042 vlad=0.068 loss=0.031 optim=0.220
+e000-i0011 => L=0.322 / t(s): batch=0.494 extract=0.041 vlad=0.063 loss=0.031 optim=0.214
+e000-i0013 => L=0.824 / t(s): batch=0.500 extract=0.041 vlad=0.059 loss=0.034 optim=0.213
+e000-i0015 => L=0.483 / t(s): batch=0.487 extract=0.040 vlad=0.057 loss=0.032 optim=0.205
+e000-i0017 => L=0.333 / t(s): batch=0.467 extract=0.039 vlad=0.052 loss=0.031 optim=0.194
+e000-i0019 => L=0.000 / t(s): batch=0.484 extract=0.039 vlad=0.054 loss=0.030 optim=0.199
+e000-i0021 => L=0.476 / t(s): batch=0.474 extract=0.039 vlad=0.052 loss=0.030 optim=0.196
+e000-i0023 => L=1.040 / t(s): batch=0.464 extract=0.037 vlad=0.048 loss=0.029 optim=0.184
+e000-i0025 => L=0.687 / t(s): batch=0.458 extract=0.037 vlad=0.046 loss=0.028 optim=0.180
+Traceback (most recent call last):
+  File "/home/yohann/Code/place_recognition/ACGiS-Net/feature_embedding_main.py", line 258, in <module>
+    trainer.train(reg_net, seg_net, train_loader, config)
+  File "/home/yohann/Code/place_recognition/ACGiS-Net/utils/trainer.py", line 256, in train
+    descrip = net(val)
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/yohann/Code/place_recognition/ACGiS-Net/models/TransPRNet.py", line 117, in forward
+    x_2 = self.TE_2(feat_vec[1])
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/yohann/Code/place_recognition/ACGiS-Net/models/TransPRNet.py", line 327, in forward
+    h, _ = self.self_attention(x)
+  File "/home/yohann/Code/place_recognition/ACGiS-Net/models/TransPRNet.py", line 338, in self_attention
+    x, attn_weights = self.self_attn(x, x, x, need_weights=True, average_attn_weights=True)
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/modules/activation.py", line 1167, in forward
+    attn_output, attn_output_weights = F.multi_head_attention_forward(
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/functional.py", line 5161, in multi_head_attention_forward
+    attn_output_weights = softmax(attn_output_weights, dim=-1)
+  File "/home/yohann/Environments/anaconda3/envs/tcnn/lib/python3.9/site-packages/torch/nn/functional.py", line 1841, in softmax
+    ret = input.softmax(dim)
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 54.00 MiB (GPU 0; 23.65 GiB total capacity; 22.20 GiB already allocated; 19.38 MiB free; 22.28 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF

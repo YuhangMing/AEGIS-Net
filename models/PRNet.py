@@ -24,7 +24,7 @@ import torch.nn.functional as F
 
 class PRNet(nn.Module):
     """
-    Class defining the place recognition netowrk
+    Class defining the place recognition netowrk with VLAD layer
     """
 
     def __init__(self, config):
@@ -86,6 +86,7 @@ class PRNet(nn.Module):
             x_2 = self.FC_2(feat_vec[1])
             x_3 = self.FC_3(feat_vec[2])
             x_4 = self.FC_4(feat_vec[3])
+            # print(x_1.size(), x_2.size(), x_3.size(), x_4.size(), x_5.size())
             # (N1+N2+N3+N4+N5 = N, 1024) [1, 11667, 1024]
             x = torch.cat((x_1, x_2, x_3, x_4, x_5), 0)
         elif self.num_feat == 3:

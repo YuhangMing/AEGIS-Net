@@ -1,0 +1,207 @@
+{
+    "os": "Linux-5.19.0-46-generic-x86_64-with-glibc2.35",
+    "python": "3.9.16",
+    "heartbeatAt": "2023-07-12T12:53:45.943490",
+    "startedAt": "2023-07-12T12:53:19.297309",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--train"
+    ],
+    "state": "running",
+    "program": "/home/yohann/Code/place_recognition/ACGiS-Net/feature_embedding_main.py",
+    "codePath": "feature_embedding_main.py",
+    "git": {
+        "remote": "https://github.com/YuhangMing/ACGiS-Net.git",
+        "commit": "f34c23e7b1fa830a18df485b5bb2c23be7250c9f"
+    },
+    "email": "mingyuhang@gmail.com",
+    "root": "/home/yohann/Code/place_recognition/ACGiS-Net",
+    "host": "yohann-workstation",
+    "username": "yohann",
+    "executable": "/home/yohann/Environments/anaconda3/envs/tcnn/bin/python",
+    "cpu_count": 16,
+    "cpu_count_logical": 32,
+    "cpu_freq": {
+        "current": 2.4325312500000016,
+        "min": 2200.0,
+        "max": 3400.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2.825,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.839,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.839,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.689,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.846,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.653,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.666,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.379,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.453,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.843,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.4,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.4,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.501,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 3.255,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 2.2,
+            "min": 2200.0,
+            "max": 3400.0
+        },
+        {
+            "current": 4.648,
+            "min": 2200.0,
+            "max": 3400.0
+        }
+    ],
+    "disk": {
+        "total": 456.8854446411133,
+        "used": 95.48887252807617
+    },
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 4090",
+            "memory_total": 25757220864
+        }
+    ],
+    "memory": {
+        "total": 46.98371124267578
+    }
+}

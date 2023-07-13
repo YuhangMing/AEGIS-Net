@@ -37,6 +37,8 @@ from sklearn.neighbors import KDTree
 
 from models.blocks import KPConv
 
+import wandb
+wandb.login()
 
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -131,6 +133,12 @@ class RecogModelTrainer:
         ################
         # Initialization
         ################
+        run = wandb.init(project='ACGiS', 
+                         config={
+                             "learning_rate": config.learning_rate,
+                             "epochs": config.max_epoch,
+                             "weight_decay": config.weight_decay,
+                         })
 
         if config.saving:
             # Training log file
@@ -159,6 +167,7 @@ class RecogModelTrainer:
 
         # Start training loop
         break_cnt = 0
+        global_step = 0
         for epoch in range(config.max_epoch):
 
             # Remove File for kill signal
@@ -267,6 +276,7 @@ class RecogModelTrainer:
                 #     torch.nn.utils.clip_grad_value_(net.parameters(), config.grad_clip_norm)
                 self.optimizer.step()
                 torch.cuda.synchronize(self.device)
+                wandb.log({'loss': loss.item()}, step=global_step)
 
                 t += [time.time()]
 
@@ -299,6 +309,7 @@ class RecogModelTrainer:
 
 
                 self.step += 1
+                global_step += 1 # for wandb logging only
                 t += [time.time()]
 
             ##############
