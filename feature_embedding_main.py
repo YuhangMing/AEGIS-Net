@@ -270,12 +270,15 @@ if __name__ == '__main__':
         t = time.time()
 
         print('Quadruplet loss, feat_num = 5')
+        ## CGiS-Net Logs
         # chosen_log = 'results/Recog_Log_2022-02-27_13-42-44'
         # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'
-        chosen_log = 'results/Recog_Log_2021-07-29_17-53-02'
+        # chosen_log = 'results/Recog_Log_2021-07-29_17-53-02'
+        ## ACGiS-Net Logs
+        chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = None        # USE current_ckpt, i.e. chkp_60
+        chkp_idx = -1        # USE current_ckpt, i.e. chkp_30
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder
@@ -301,7 +304,8 @@ if __name__ == '__main__':
         config.print_current()
 
         # Initialise segmentation network
-        reg_net = PRNet(config)
+        # reg_net = PRNet(config)
+        reg_net = TransPRNet(config)
         reg_net.to(device)
 
         # Load pretrained weights
