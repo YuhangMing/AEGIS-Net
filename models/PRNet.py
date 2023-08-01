@@ -46,7 +46,7 @@ class PRNet(nn.Module):
             self.FC_3 = UnaryBlock(in_size*(2**2), feature_size, False, 0)
             self.FC_4 = UnaryBlock(in_size*(2**3), feature_size, False, 0)
         elif self.num_feat == 3:
-            self.FC_3 = UnaryBlock(in_size*(2**2), feature_size, False, 0)
+            self.FC_2 = UnaryBlock(in_size*2, feature_size, False, 0)
             self.FC_4 = UnaryBlock(in_size*(2**3), feature_size, False, 0)
         elif self.num_feat == 1:
             pass
@@ -90,10 +90,10 @@ class PRNet(nn.Module):
             # (N1+N2+N3+N4+N5 = N, 1024) [1, 11667, 1024]
             x = torch.cat((x_1, x_2, x_3, x_4, x_5), 0)
         elif self.num_feat == 3:
-            x_3 = self.FC_3(feat_vec[2])
+            x_2 = self.FC_2(feat_vec[1])
             x_4 = self.FC_4(feat_vec[3])
             # print('using last 3 block features')
-            x = torch.cat((x_3, x_4, x_5), 0)
+            x = torch.cat((x_2, x_4, x_5), 0)
         elif self.num_feat == 1:
             x = x_5
         else:

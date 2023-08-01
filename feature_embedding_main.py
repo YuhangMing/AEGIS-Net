@@ -55,6 +55,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', dest='bTRAIN', action='store_true', help='Set to train the VLAD layers')
     parser.add_argument('--test', dest='bTRAIN', action='store_false', help='Set to test the VLAD layers')
+    parser.add_argument('--no_att', dest='bNoAtt', action='store_true', help='Set not to use attention layers')
     parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--optimiser', type=str, default='Adam', help='Choose the optimiser for training')
     parser.add_argument('--loss', type=str, default='lazy_quadruplet', help='Choose the loss function for training')
@@ -67,13 +68,15 @@ if __name__ == '__main__':
         print('Training parameters:')
         print('Optimiser:', FLAGS.optimiser)
         print('Number of features:', FLAGS.num_feat)
+        print('Use attention layers:', not FLAGS.bNoAtt)
         print('Use color information:', not FLAGS.bNoColor)
         print('Loss function:', FLAGS.loss)
     else:
         print('Testing parameters load from files.')
         print('Evaluation:', FLAGS.bEVAL)
         print('Number of features:', FLAGS.num_feat)
-        print('Use color information:', FLAGS.bNoColor)
+        print('Use attention layers:', not FLAGS.bNoAtt)
+        print('Use color information:', not FLAGS.bNoColor)
         print('Loss function:', FLAGS.loss)
         print('Visualisation:', FLAGS.bVISUAL)
 
@@ -223,18 +226,21 @@ if __name__ == '__main__':
         print('\n*************************')
         print('Recognition Model Preparation')
         t = time.time()
-        # reg_net = PRNet(config)
-        reg_net = TransPRNet(config)
+        if FLAGS.bNoAtt:
+            reg_net = PRNet(config) # comparison results, using feat 2, 4, 5 without transformer
+        else:
+            reg_net = TransPRNet(config)
         # for k, v in reg_net.named_parameters():
         #     print(k, v)
         # print(reg_net.named_parameters())
 
         # Choose here if you want to start training from a previous snapshot (None for new training)
-        # previous_training_path = 'Recog_Log_2021-08-20_22-39-43'
-        previous_training_path = ''
+        previous_training_path = None
+        # previous_training_path = 'Recog_Log_2023-07-13_14-20-52'    # 30 epochs
+        # previous_training_path = 'Recog_Log_2023-07-23_08-07-54'    # 58 epochs
 
         # Choose index of checkpoint to start from. If None, uses the latest chkp
-        chkp_idx = None # override here
+        chkp_idx = None # -1 for last checkpoint, None for current_chkp
         if previous_training_path:
             # Find all snapshot in the chosen training folder
             chkp_path = os.path.join('results', previous_training_path, 'checkpoints') # override here
@@ -247,6 +253,7 @@ if __name__ == '__main__':
             chosen_chkp = os.path.join('results', previous_training_path, 'checkpoints', chosen_chkp)
         else:
             chosen_chkp = None
+        print(chosen_chkp)
 
         # initialise trainier
         trainer = RecogModelTrainer(reg_net, config, chkp_path=chosen_chkp)
@@ -275,10 +282,11 @@ if __name__ == '__main__':
         # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'
         # chosen_log = 'results/Recog_Log_2021-07-29_17-53-02'
         ## ACGiS-Net Logs
-        chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
+        # chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
+        chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = -1        # USE current_ckpt, i.e. chkp_30
+        chkp_idx = 4        # -1 for latest, None for current
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder
@@ -304,8 +312,10 @@ if __name__ == '__main__':
         config.print_current()
 
         # Initialise segmentation network
-        # reg_net = PRNet(config)
-        reg_net = TransPRNet(config)
+        if FLAGS.bNoAtt:
+            reg_net = PRNet(config)
+        else:
+            reg_net = TransPRNet(config)
         reg_net.to(device)
 
         # Load pretrained weights
