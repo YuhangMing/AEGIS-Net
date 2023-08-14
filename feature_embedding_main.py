@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--optimiser', type=str, default='Adam', help='Choose the optimiser for training')
     parser.add_argument('--loss', type=str, default='lazy_quadruplet', help='Choose the loss function for training')
-    parser.add_argument('--num_feat', type=int, default=5, help='How many block features to use [default: 5]')
+    parser.add_argument('--num_feat', type=int, default=3, help='How many block features to use [default: 5]')
     parser.add_argument('--evaluate', dest='bEVAL', action='store_true', help='Set to evaluate the VLAD results')
     parser.add_argument('--visualise', dest='bVISUAL', action='store_true', help='Set to visualise the VLAD results')
     FLAGS=parser.parse_args()
@@ -271,22 +271,21 @@ if __name__ == '__main__':
     ##########################
     else:
         print('\nTESTING VLAD Layer...\n')
+        # python feature_embedding_main.py --test --no_att --num_feat 3 --evaluate
 
         print('\nLoad pre-trained recognition VLAD')
         print('*********************************')
         t = time.time()
 
-        print('Quadruplet loss, feat_num = 5')
-        ## CGiS-Net Logs
-        # chosen_log = 'results/Recog_Log_2022-02-27_13-42-44'
-        # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'
-        # chosen_log = 'results/Recog_Log_2021-07-29_17-53-02'
+        print('Quadruplet loss, feat_num = 3')
         ## ACGiS-Net Logs
         # chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
-        chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
+        # chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
+        ## CGiS-Net Logs
+        chosen_log = 'results/Recog_Log_2023-08-01_09-01-30'    # no attention trained for 30 epochs
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = 4        # -1 for latest, None for current
+        chkp_idx = -1        # -1 for latest, None for current
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder

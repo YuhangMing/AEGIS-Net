@@ -52,7 +52,7 @@ class TransPRNet(nn.Module):
         # elif self.num_feat == 1:
         #     pass
         # Use transformer encoder block
-        if self.num_feat == 5:
+        if self.num_feat == 3:
             # actually using only 3 layers here (memory consideration)
             ## Self attention layers
             # self.TE_1 = TransformerEncoderBlock(in_size, feature_size, dim_hidden=1024, activation='relu', heads=4, dropout=0.1)
