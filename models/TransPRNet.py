@@ -99,21 +99,25 @@ class TransPRNet(nn.Module):
             # self attention on per-layer features
             # print('using all 5 block features')
             # x_1 = self.TE_1(feat_vec[0])
-            x_2 = self.TE_2(feat_vec[1])
+            x_2, _ = self.TE_2(feat_vec[1])
             # x_3 = self.TE_3(feat_vec[2])
-            x_4 = self.TE_4(feat_vec[3])
-            x_5 = self.TE_5(feat_vec[4])
+            x_4, _ = self.TE_4(feat_vec[3])
+            x_5, _ = self.TE_5(feat_vec[4])
             # print(x_1.size(), x_2.size(), x_3.size(), x_4.size(), x_5.size())
             # print(x_2.size(), x_4.size(), x_5.size())
             # (N1+N2+N3+N4+N5 = N, 1024) [1, 11667, 1024]
             x = torch.cat((x_2, x_4, x_5), 0)
             # print(x.size())
+
+            # att_w = [w_2, w_4, w_5]
         elif self.num_feat == 1:
-            x = self.TE_5(feat_vec[4])
+            x, _ = self.TE_5(feat_vec[4])
+            # att_w = [w_5]
         else:
             raise ValueError('unsupport feature number')
         # self attention on all features
         x = self.TE(x)
+        # att_w.append(w)
         
         # print('feature size per layer:', x_1.size(), x_2.size(), x_3.size(), x_4.size(), x_5.size())
         # print('cated feature size:', x.size())
@@ -124,6 +128,7 @@ class TransPRNet(nn.Module):
         # print('vlad vec size:', x.size())
 
         return x
+        # return x, att_w
     
     def loss(self, loss_function, a, p, n, n_star=None):
         if loss_function == 'LzQuad':
@@ -305,15 +310,15 @@ class TransformerEncoderBlock(nn.Module):
     def forward(self, x):
         ## Skip connection is removed for feed forward layers (dimension changed)
         if self.norm_first:
-            h, _ = self.self_attention(self.norm1(x))
+            h, attn_weights = self.self_attention(self.norm1(x))
             x = x + h
             x = self.feed_forward(self.norm2(x))
         else:
-            h, _ = self.self_attention(x)
+            h, attn_weights = self.self_attention(x)
             x = self.norm1(x + h)
             x = self.norm2(self.feed_forward(x))
         
-        return x
+        return x, attn_weights
 
     ## self attention block
     def self_attention(self, x):

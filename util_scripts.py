@@ -33,6 +33,10 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     #     print()
 
 if __name__ == '__main__':
+    '''
+    Check #### xxx #### for the function of each code block.
+    '''
+    
     #### Plot Legends ####
     dataset = 'ScanNet'
     if dataset == 'S3DIS':

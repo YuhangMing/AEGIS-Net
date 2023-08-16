@@ -55,11 +55,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', dest='bTRAIN', action='store_true', help='Set to train the VLAD layers')
     parser.add_argument('--test', dest='bTRAIN', action='store_false', help='Set to test the VLAD layers')
-    parser.add_argument('--no_att', dest='bNoAtt', action='store_true', help='Set not to use attention layers')
-    parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--optimiser', type=str, default='Adam', help='Choose the optimiser for training')
     parser.add_argument('--loss', type=str, default='lazy_quadruplet', help='Choose the loss function for training')
     parser.add_argument('--num_feat', type=int, default=3, help='How many block features to use [default: 5]')
+    parser.add_argument('--att_weights', dest='bAttW', action='store_true', help='Set to store attention weight maps')
+    parser.add_argument('--no_att', dest='bNoAtt', action='store_true', help='Set not to use attention layers')
+    parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--evaluate', dest='bEVAL', action='store_true', help='Set to evaluate the VLAD results')
     parser.add_argument('--visualise', dest='bVISUAL', action='store_true', help='Set to visualise the VLAD results')
     FLAGS=parser.parse_args()
@@ -67,17 +68,19 @@ if __name__ == '__main__':
     if FLAGS.bTRAIN:
         print('Training parameters:')
         print('Optimiser:', FLAGS.optimiser)
+        print('Loss function:', FLAGS.loss)
         print('Number of features:', FLAGS.num_feat)
+        print('Store attention weights:', FLAGS.bAttW)
         print('Use attention layers:', not FLAGS.bNoAtt)
         print('Use color information:', not FLAGS.bNoColor)
-        print('Loss function:', FLAGS.loss)
     else:
         print('Testing parameters load from files.')
-        print('Evaluation:', FLAGS.bEVAL)
+        print('Loss function:', FLAGS.loss)
         print('Number of features:', FLAGS.num_feat)
+        print('Store attention weights:', FLAGS.bAttW)
         print('Use attention layers:', not FLAGS.bNoAtt)
         print('Use color information:', not FLAGS.bNoColor)
-        print('Loss function:', FLAGS.loss)
+        print('Evaluation:', FLAGS.bEVAL)
         print('Visualisation:', FLAGS.bVISUAL)
 
     ######################
@@ -166,9 +169,12 @@ if __name__ == '__main__':
         print('Training NETVLAD Layer...')
 
         # update parameters for recog training
-        config.num_feat = FLAGS.num_feat
         config.optimiser = FLAGS.optimiser
         config.loss = FLAGS.loss
+        config.num_feat = FLAGS.num_feat
+        config.store_attention_weight = FLAGS.bAttW
+        config.no_attention = FLAGS.bNoAtt
+        config.no_color = FLAGS.bNoColor
         config.max_in_points = 9000
         config.max_val_points = 9000
         config.num_neg_samples = 6
@@ -226,7 +232,7 @@ if __name__ == '__main__':
         print('\n*************************')
         print('Recognition Model Preparation')
         t = time.time()
-        if FLAGS.bNoAtt:
+        if config.no_attention:
             reg_net = PRNet(config) # comparison results, using feat 2, 4, 5 without transformer
         else:
             reg_net = TransPRNet(config)
@@ -282,11 +288,13 @@ if __name__ == '__main__':
         # chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
         # chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
         ## CGiS-Net Logs
-        chosen_log = 'results/Recog_Log_2023-08-01_09-01-30'    # no attention trained for 30 epochs
+        # chosen_log = 'results/Recog_Log_2023-08-01_09-01-30'    # no attention trained for 30 epochs
         # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'    # default CGiS-Net with 5 feats
+        ## Test Config
+        chosen_log = 'results/Recog_Log_2021-08-29_13-46-24_paraTest'    # no attention trained for 30 epochs
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = 4        # -1 for latest, None for current
+        chkp_idx = -1        # -1 for latest, None for current
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder
@@ -312,7 +320,7 @@ if __name__ == '__main__':
         config.print_current()
 
         # Initialise segmentation network
-        if FLAGS.bNoAtt:
+        if config.no_attention:
             reg_net = PRNet(config)
         else:
             reg_net = TransPRNet(config)
