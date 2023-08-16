@@ -89,10 +89,10 @@ if __name__ == '__main__':
     t = time.time()
     if FLAGS.bNoColor:
         print('ScanNetSLAM, WITHOUT color')
-        chosen_log = 'results/prev/Log_2021-06-16_02-31-04'  # => ScanNetSLAM (full), w/o color, batch 8, 1st feat 64, 0.04-2.0
+        chosen_log = 'results/Log_2021-06-16_02-31-04'  # => ScanNetSLAM (full), w/o color, batch 8, 1st feat 64, 0.04-2.0
     else:
         print('ScanNetSLAM, WITH color')
-        chosen_log = 'results/prev/Log_2021-06-16_02-42-30'  # => ScanNetSLAM (full), with color, batch 8, 1st feat 64, 0.04-2.0
+        chosen_log = 'results/Log_2021-06-16_02-42-30'  # => ScanNetSLAM (full), with color, batch 8, 1st feat 64, 0.04-2.0
     # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
     chkp_idx = 0 # chkp_500
     # print('Loading pre-trained segmentation KP-FCNN from', chosen_log, 'chkp_idx=', chkp_idx)
@@ -283,9 +283,10 @@ if __name__ == '__main__':
         # chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
         ## CGiS-Net Logs
         chosen_log = 'results/Recog_Log_2023-08-01_09-01-30'    # no attention trained for 30 epochs
+        # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'    # default CGiS-Net with 5 feats
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = -1        # -1 for latest, None for current
+        chkp_idx = 4        # -1 for latest, None for current
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder

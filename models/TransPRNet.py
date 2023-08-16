@@ -34,6 +34,7 @@ class TransPRNet(nn.Module):
         # Feature concatenation layer
         in_size = config.first_features_dim
         feature_size = in_size * (2**4) # D
+        print(config.num_feat)
         self.num_feat = config.num_feat
         self.num_neg_samples = config.num_neg_samples
         # print(feature_size)
@@ -52,7 +53,7 @@ class TransPRNet(nn.Module):
         # elif self.num_feat == 1:
         #     pass
         # Use transformer encoder block
-        if self.num_feat == 3:
+        if self.num_feat == 3:      # trained with num_feat set to 5, actually using only 3 layers here (memory consideration)
             # actually using only 3 layers here (memory consideration)
             ## Self attention layers
             # self.TE_1 = TransformerEncoderBlock(in_size, feature_size, dim_hidden=1024, activation='relu', heads=4, dropout=0.1)
@@ -85,7 +86,7 @@ class TransPRNet(nn.Module):
 
 
     def forward(self, feat_vec):
-        # intpu a list of feature vectors 
+        # input a list of feature vectors 
         # (from each conv blocks)
         # print(feat_vec[0].size())
         # x_1 = self.FC_1(torch.unsqueeze(feat_vec[0], 0))    # single batch test, add back batch dimension
@@ -94,23 +95,7 @@ class TransPRNet(nn.Module):
         #                                  feat_vec[3].size(), feat_vec[4].size())
         # concatenate feature vectors from each conv block
         
-        # x_5 = feat_vec[4]
-        # if self.num_feat == 5:
-        #     # print('using all 5 block features')
-        #     x_1 = self.FC_1(feat_vec[0])
-        #     x_2 = self.FC_2(feat_vec[1])
-        #     x_3 = self.FC_3(feat_vec[2])
-        #     x_4 = self.FC_4(feat_vec[3])
-        #     # (N1+N2+N3+N4+N5 = N, 1024) [1, 11667, 1024]
-        #     x = torch.cat((x_1, x_2, x_3, x_4, x_5), 0)
-        # elif self.num_feat == 3:
-        #     x_3 = self.FC_3(feat_vec[2])
-        #     x_4 = self.FC_4(feat_vec[3])
-        #     # print('using last 3 block features')
-        #     x = torch.cat((x_3, x_4, x_5), 0)
-        # elif self.num_feat == 1:
-        #     x = x_5
-        if self.num_feat == 5:
+        if self.num_feat == 3:
             # self attention on per-layer features
             # print('using all 5 block features')
             # x_1 = self.TE_1(feat_vec[0])
