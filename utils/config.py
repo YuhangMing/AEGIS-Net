@@ -195,7 +195,6 @@ class Config:
     # neg sample number
     num_neg_samples = 8
     # atttion
-    store_attention_weight = False
     no_attention = False
     # color 
     no_color = False
@@ -402,7 +401,6 @@ class Config:
             text_file.write('loss_function = {:s}\n'.format(self.loss))
             text_file.write('num_neg_samples = {:d}\n'.format(self.num_neg_samples))
             # atttion & color parameters
-            text_file.write('store_attention_weight = {:d}\n'.format(self.store_attention_weight))
             text_file.write('no_attention = {:d}\n'.format(self.no_attention))
             text_file.write('no_color = {:d}\n'.format(self.no_color))
 
@@ -515,7 +513,6 @@ class Config:
         print('optimiser = {:s}'.format(self.optimiser))
         print('loss_function = {:s}'.format(self.loss))
         print('num_neg_samples = {:d}'.format(self.num_neg_samples))
-        print('store_attention_weight = {:d}'.format(self.store_attention_weight))
         print('no_attention = {:d}'.format(self.no_attention))
         print('no_color = {:d}'.format(self.no_color))
         print('# -----------------------------------#')

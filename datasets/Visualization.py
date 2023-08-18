@@ -23,37 +23,24 @@
 #
 
 # Common libs
-import enum
 import time
 from matplotlib.pyplot import subplot_tool
 import numpy as np
 import pickle
-import json
-
-from numpy.lib.shape_base import _hvdsplit_dispatcher
 import torch
-import math
-# import yaml
 from multiprocessing import Lock
 
 
 # OS functions
-from os import listdir
-from os.path import exists, join, isdir
+from os.path import exists, join
 
 # Dataset parent class
 from datasets.common import PointCloudDataset
-from torch.utils.data import Sampler, get_worker_info
+from torch.utils.data import Sampler
 from utils.mayavi_visu import *
 
-from utils.mesh import rasterize_mesh
-from utils.metrics import fast_confusion
-
-from datasets.common import grid_subsampling
 from utils.config import bcolors
 
-# Open3d for generating sub pcds
-import open3d as o3d
 
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -61,11 +48,13 @@ import open3d as o3d
 #       \******************************/
 
 
-class ScannetTripleDataset(PointCloudDataset):
+class VisualizationDataset(PointCloudDataset):
     """Class to handle Scannet dataset for Triple segmentation."""
 
-    def __init__(self, config, set='training', balance_classes=True):
-        PointCloudDataset.__init__(self, 'ScannetTriple')
+    def __init__(self, config, pcd_file):
+        PointCloudDataset.__init__(self, 'Visualization')
+        
+        self.pcd_file = pcd_file
 
         ##########################
         # Parameters for the files
@@ -73,46 +62,35 @@ class ScannetTripleDataset(PointCloudDataset):
 
         # Dataset folder
         self.path = '/media/yohann/ScanNet'
-        
-        # # pcd without zero-meaning coordinates
-        # self.input_pcd_path = join(self.path, 'scans', 'input_pcd')
-        # pcd with zero-meaning coordinates
         self.data_path = join(self.path, 'place_recognition/scans')
-        # self.input_pcd_path = join(self.path, 'scans', 'input_pcd_0mean')
         print("point cloud path:", self.data_path)
-
         # Type of task conducted on this dataset
         self.dataset_task = 'registration'
 
-        # Training or test set
-        self.set = set
+        # fill the necessary parameters
+        scene_folder = self.pcd_file.split('_')
+        frame_id = int(scene_folder[2])
+        scene_folder = scene_folder[0] + '_' + scene_folder[1]
+        pose = np.loadtxt(join(self.data_path, scene_folder, 'pose', 
+                               str(frame_id)+'.txt'))
+        pcd_path = join(self.data_path, scene_folder, 'input_pcd_0mean', self.pcd_file)
 
-        # Get a list of sequences
-        # data_split_path = join(self.path, "test_files")
-        data_split_path = join(self.path, "tools/Tasks/Benchmark")
-        # data_split_path = join(self.path, "Tasks/Benchmark")
-        # Cloud names
-        if self.set == 'training':
-            scene_file_name = join(data_split_path, 'scannetv2_train.txt')
-            self.scenes = np.sort(np.loadtxt(scene_file_name, dtype=str))
-        elif self.set == 'validation':
-            scene_file_name = join(data_split_path, 'scannetv2_val.txt')
-            self.scenes = np.sort(np.loadtxt(scene_file_name, dtype=str))
-            # self.clouds = [self.scenes[0]]  # test
-        elif self.set == 'test':
-            scene_file_name = join(data_split_path, 'scannetv2_test.txt')
-            # scene_file_name = join(data_split_path, 'scannetv2_test_val.txt')
-            self.scenes = np.loadtxt(scene_file_name, dtype=str)
-            self.scenes = self.scenes
-            # self.scenes = [self.scenes[0]]  # only test one scene
-            # print((self.scenes))
-        else:
-            raise ValueError('Unsupport set type')
+        self.scenes = [scene_folder]
+        self.fids = [[frame_id]]          # list of list of actual frame id used to create pcd
+        self.poses = [[pose]]         # list of list of frame pose used to create pcd
+        self.files = [[pcd_path]]         # list of list of pcd files created, pts in camera coordinate frame
+        # training/val only
+        # self.pos_thred = 2**2
+        self.posIds = [None]        # list of dictionary of positive pcd example ids for training
+        self.negIds = [None]        # list of dictionary of negative pcd example ids for training
+        self.pcd_sizes = [None]     # list of list of pcd sizes
+        # val/testing only
+        self.class_proportions = None
+        self.val_confs = []     # for validation
 
         ###########################
         # Object classes parameters
         ###########################
-
         # Dict from labels to names
         # subset of 20 classes from NYUv2's 40 classes
         self.label_to_names = {0: 'unclassified',
@@ -161,58 +139,28 @@ class ScannetTripleDataset(PointCloudDataset):
                                 36: [227, 119, 194], #  -> 'bathtub',
                                 39: [82,  83,  163], # dark purple -> 'otherfurniture'
                                }
-
         # Initialize a bunch of variables concerning class labels
         self.init_labels()
-
         # List of classes ignored during training (can be empty)
         self.ignored_labels = np.array([0])
 
         ##################
         # Other parameters
         ##################
-
         # Update number of class and data task in configuration
         config.num_classes = self.num_classes - len(self.ignored_labels)  # ScanNet
         config.dataset_task = self.dataset_task
-
         # Parameters from config
         self.config = config
-
-        # Potential like cloud segmentation?
-        # # Using potential or random epoch generation
-        # self.use_potentials = use_potentials
 
         #####################
         # Prepare point cloud
         #####################
-        # self.intrinsics = []    # list of Ks for every scene
-        # self.nframes = []       # list of nums of frames for every scene
-        self.fids = []          # list of list of actual frame id used to create pcd
-        self.poses = []         # list of list of frame pose used to create pcd
-        self.files = []         # list of list of pcd files created, pts in camera coordinate frame
-        # training/val only
-        # self.pos_thred = 2**2
-        self.posIds = []        # list of dictionary of positive pcd example ids for training
-        self.negIds = []        # list of dictionary of negative pcd example ids for training
-        self.pcd_sizes = []     # list of list of pcd sizes
-        # val/testing only
-        self.class_proportions = None
-        self.val_confs = []     # for validation
-
         # Choose batch_num in_R and max_in_p depending on validation or training
-        if self.set == 'training':
-            self.batch_num = config.batch_num
-            self.max_in_p = config.max_in_points
-            self.in_R = config.in_radius
-        else:
-            # Loaded from training parameters
-            self.batch_num = config.val_batch_num
-            self.max_in_p = config.max_val_points
-            self.in_R = config.val_radius
-
-        # load sub cloud from the HD mesh w.r.t. cameras
-        self.prepare_point_cloud()
+        # Loaded from training parameters
+        self.batch_num = config.val_batch_num
+        self.max_in_p = config.max_val_points
+        self.in_R = config.val_radius
 
         # get all_inds as 2D array
         # (index of the scene, index of the frame)
@@ -234,15 +182,8 @@ class ScannetTripleDataset(PointCloudDataset):
         self.potentials = torch.from_numpy(np.random.rand(self.all_inds.shape[0]) * 0.1 + 0.1)
         self.potentials.share_memory_()
 
-        # If true, the same amount of frames is picked per class
-        # SET FALSE HERE
-        self.balance_classes = balance_classes
-
         # shared epoch indices and classes (in case we want class balanced sampler)
-        if set == 'training':
-            N = int(np.ceil(config.epoch_steps * self.batch_num * 1.1))
-        else:
-            N = int(np.ceil(config.validation_size * self.batch_num * 1.1))
+        N = int(np.ceil(config.validation_size * self.batch_num * 1.1))
         self.num_neg_samples = config.num_neg_samples
         # print(config.validation_size)
         # print(self.batch_num)
@@ -317,114 +258,7 @@ class ScannetTripleDataset(PointCloudDataset):
 
             # Current/query pcd indices
             s_ind, f_ind = self.all_inds[ind]
-
-            if self.set in ['training', 'validation']:
-                ## items should be generated here:
-                # reference to pointnet_vlad: train_pointnetvlad.py
-                # current pcd index:        s_ind & f_ind;
-                # positive pcd indices:     [pos_s_inds, pos_f_inds]; default 2
-                # negative pcd indices:     [neg_s_inds, neg_f_inds]; default 6 (4 in dh3d)
-                # other negative pcd index: o_s_ind, o_f_ind.
-
-                # check there are enough positive pcds
-                num_pos_ids = len(self.posIds[s_ind][f_ind])
-                if num_pos_ids < 2:
-                    print('Skip current pcd (', self.files[s_ind][f_ind].split('/')[-1], ') due to empty positives.')
-                    return []
-                # print('Current pcd index:', s_ind, f_ind)
-                # print('Positive lists:', self.posIds[s_ind][f_ind])
-                # print('Negative lists:', self.negIds[s_ind][f_ind])
-
-                # Positive pcd indices
-                # pos_s_ind = s_ind
-                # tmp_f_inds = np.random.randint(0, num_pos_ids, 2)
-                # pos_f_inds = np.array(self.posIds[s_ind][f_ind])[tmp_f_inds]
-                pos_f_inds = [np.random.choice( self.posIds[s_ind][f_ind] )] 
-                # 2 positives, ensure not choose the same positive pcd
-                while True:
-                    tmp = np.random.choice( self.posIds[s_ind][f_ind] ) 
-                    if tmp != pos_f_inds[0]:
-                        pos_f_inds.append(tmp)
-                        break
-                pos_f_inds = np.array(pos_f_inds)
-                # print(num_pos_ids, pos_s_ind, pos_f_inds)
-                all_indices = [ (s_ind, f_ind), (s_ind, pos_f_inds[0]), (s_ind, pos_f_inds[1]) ]
-                
-                ## Add selection criterion based on pcd size due GPU memory limitation ##
-                # check pcd sizes, choose 2x(9000+), 1x(7000-9000), 1x(5000-7000), 2x(5000-)
-                count_XL = 0
-                max_XL = 1
-                count_L = 0
-                max_L = 1
-                count_M = 0
-                max_M = 1
-                # choose at most one from the same scene
-                if len(self.negIds[s_ind][f_ind]) > 0:
-                    neg_s_inds = [s_ind]
-                    neg_f_inds = [np.random.choice(self.negIds[s_ind][f_ind])]
-                    # get the size of selected pcd
-                    tmp_size = int(self.pcd_sizes[neg_s_inds[-1]][neg_f_inds[-1]])
-                    # print(tmp_size)
-                    if tmp_size >= 9000:
-                        count_XL += 1
-                    elif tmp_size >= 7000:
-                        count_L += 1
-                    elif tmp_size > 5000:
-                        count_M += 1
-                    else:
-                        pass
-                else:
-                    neg_s_inds = []
-                    neg_f_inds = []
-                # continue select the rest negative pcds from other scenes
-                while len(neg_s_inds) < self.num_neg_samples:
-                    tmp_neg_s = np.random.choice( len(self.scenes) )
-                    if self.scenes[s_ind][:9] != self.scenes[tmp_neg_s][:9]:
-                        tmp_neg_f = np.random.randint(0, len(self.fids[tmp_neg_s]))
-                        # check the pcd size
-                        tmp_size = int(self.pcd_sizes[tmp_neg_s][tmp_neg_f])
-                        if tmp_size >= 9000:
-                            if count_XL == max_XL:
-                                continue
-                            count_XL += 1
-                        elif tmp_size >= 7000:
-                            if count_L == max_L:
-                                continue
-                            count_L += 1
-                        elif tmp_size >= 5000:
-                            if count_M == max_M:
-                                continue
-                            count_M += 1
-                        else:
-                            pass
-                        # print(tmp_size)
-                        neg_s_inds.append(tmp_neg_s)
-                        neg_f_inds.append(tmp_neg_f)
-                
-                # print(neg_s_inds, neg_f_inds)
-                for idx in range(self.num_neg_samples):
-                    all_indices.append( (neg_s_inds[idx], neg_f_inds[idx]) )
-                
-                # Other negative pcd index for quadruplet
-                # find a pcd that is negative to all anchor, positives, and negatives
-                neg_star_s_ind = -1
-                while neg_star_s_ind < 0:
-                    tmp_neg = np.random.choice( len(self.scenes) )
-                    bMatched = False
-                    if self.scenes[s_ind][:9] != self.scenes[tmp_neg][:9]:
-                        bMatched = True
-                    for neg_s_ind in neg_s_inds:
-                        if self.scenes[s_ind][:9] != self.scenes[tmp_neg][:9]:
-                            bMatched = True
-                            break
-                    if not bMatched:
-                        neg_star_s_ind = tmp_neg
-                neg_star_f_ind = np.random.randint(0, len(self.fids[neg_star_s_ind]))
-                all_indices.append( (neg_star_s_ind, neg_star_f_ind) )
-                # print('All chosen indices: [query/current], [positive]*2, [negative]*4', all_indices)
-            else:
-                # in testing, only get the current index
-                all_indices = [(s_ind, f_ind)]
+            all_indices = [(s_ind, f_ind)]
 
             for s_ind, f_ind in all_indices:
                 #################
@@ -570,117 +404,6 @@ class ScannetTripleDataset(PointCloudDataset):
 
         return [self.config.num_layers] + input_list
 
-    def prepare_point_cloud(self):
-        """
-        generate sub point clouds from the complete
-        reconstructed scene, using current pose and
-        depth frame
-        """
-
-        if not exists(self.data_path):
-            raise ValueError('Missing input pcd folder:', self.data_path)
-        
-        # Load pre-processed files [all tasks are stored in a single file]
-        # positive and negative indices for each pcd
-        vlad_pn_file = join(self.path, 'place_recognition/VLAD_triplets', 'vlad_pos_neg.pkl')
-        with open(vlad_pn_file, "rb") as f:
-            # dict, key = scene string, val = list of pairs of (list pos, list neg)
-            all_scene_pos_neg = pickle.load(f)
-        # zero-meaned pcd file names for each pcd
-        valid_pcd_file = join(self.path, 'place_recognition/VLAD_triplets', 'vlad_pcd.pkl')
-        with open(valid_pcd_file, "rb") as f:
-            # dict, key = scene string, val = list of filenames
-            all_scene_pcds = pickle.load(f)
-        # num of pts in each pcd
-        pcd_size_file = join(self.path, 'place_recognition/VLAD_triplets', 'pcd_size.pkl')
-        with open(pcd_size_file, "rb") as f:
-            # dict, key = scene string, val = list of point numbers
-            dict_pcd_size = pickle.load(f)
-
-        # Loop through all scenes to retrieve data for current task
-        pcd_count = 0
-        for i, scene in enumerate(self.scenes):
-            pcd_count += len(all_scene_pcds[scene])
-            print('{}%'.format(int(100*i/len(self.scenes))), flush=True, end='\r')
-            # print('scene_id_name', i, scene, 'num_of_pcds', num_scene_pcds)
-            # print('Processing:', scene, '(', i+1 , '/', len(self.scenes), ')') 
-            # # print('  from', scene_folder)
-            # # print('   to ', scene_pcd_path)
-            
-            # path to original ScanNet data
-            scene_folder = join(self.data_path, scene)
-            # path to processed ScanNet point cloud
-            scene_pcd_path = join(scene_folder, 'input_pcd_0mean')
-            if not exists(scene_pcd_path):
-                raise ValueError('Missing scene folder:', scene_pcd_path)
-
-            # get necessary data
-            scene_files = []    # list of pcd file names for current scene
-            scene_poses = []    # list of pcd poses for current scene
-            scene_fids = []     # list of actual frame id used to generate the pcd
-            all_posId = []      # list of positive pcd Indices
-            all_negId = []      # list of negative pcd Indices
-            for j, subpcd_file in enumerate(all_scene_pcds[scene]):
-                actual_frame_id = int(subpcd_file[13:-8])
-                # print('{}%'.format(int(100*j/num_scene_pcds)), flush=True, end='\r')
-                frame_subpcd_file = join(scene_pcd_path, subpcd_file)
-
-                # get pose of current frame
-                pose = np.loadtxt(join(scene_folder, 'pose', str(actual_frame_id)+'.txt'))
-                # double check if pose is lost
-                chk_val = np.sum(pose)
-                if np.isinf(chk_val) or np.isnan(chk_val):
-                    raise ValueError('Invalid pose value for', scene_folder, actual_frame_id)
-
-                # store file name info
-                scene_files.append(frame_subpcd_file)
-                scene_poses.append(pose)
-                scene_fids.append(actual_frame_id)
-
-                # store current pos and neg index
-                # all_posId[j] = all_scene_pos_neg[scene][j][0]
-                # all_negId[j] = all_scene_pos_neg[scene][j][1]
-                all_posId.append(all_scene_pos_neg[scene][j][0])
-                all_negId.append(all_scene_pos_neg[scene][j][1])
-
-                # double check if the point cloud file exists
-                if not exists(frame_subpcd_file):
-                    raise ValueError('Missing subpcd file:', frame_subpcd_file)
-            # print('100 %')
-
-            self.files.append(scene_files)
-            self.poses.append(scene_poses)
-            self.fids.append(scene_fids)
-            self.pcd_sizes.append(dict_pcd_size[scene])
-            if self.set in ['training', 'validation']:
-                self.posIds.append(all_posId)
-                self.negIds.append(all_negId)
-            # print(self.posIds)
-        print('Total # of pcd:', pcd_count)
-
-        if self.set in ['training', 'validation']:
-            self.class_proportions = np.ones((self.num_classes,), dtype=np.int32)
-
-    def parse_scene_info(self, filename):
-        """ read information file with given filename
-
-            Returns
-            -------
-            int 
-                number of frames in the sequence
-            list
-                [height width fx fy cx cy].
-        """
-        K = []
-        info_file = open(filename)
-        for line in info_file:
-            vals = line.strip().split(' ')
-
-            if 'depth' in vals[0]:
-                K.append(float(vals[2]))
-            if vals[0] == 'numDepthFrames':
-                nFrames = int(vals[2])
-        return nFrames, K
 
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -688,26 +411,23 @@ class ScannetTripleDataset(PointCloudDataset):
 #       \********************************/
 
 
-class ScannetTripleSampler(Sampler):
+class VisualizationSampler(Sampler):
     """
-    Sampler for ScannetTriple
+    Sampler for Visualization
     Generate the index for loading at each iteration/step
 
     When Training: the samples are returned randomly
     When Testing: the samples are returned in order
     """
 
-    def __init__(self, dataset: ScannetTripleDataset):
+    def __init__(self, dataset: VisualizationDataset):
         Sampler.__init__(self, dataset)
 
         # Dataset used by the sampler (no copy is made in memory)
         self.dataset = dataset
 
         # Number of step per epoch
-        if dataset.set == 'training':
-            self.N = dataset.config.epoch_steps
-        else:
-            self.N = dataset.config.validation_size
+        self.N = dataset.config.validation_size
 
         return
 
@@ -717,102 +437,39 @@ class ScannetTripleSampler(Sampler):
         (input sphere) in epoch instead of the list of point indices
         """
 
-        if self.dataset.balance_classes:
+        # Initiate current epoch ind
+        self.dataset.epoch_i *= 0
+        self.dataset.epoch_inds *= 0
+        # self.dataset.epoch_labels *= 0
 
-            # Initiate current epoch ind
-            self.dataset.epoch_i *= 0
-            self.dataset.epoch_inds *= 0
-            # self.dataset.epoch_labels *= 0
+        # Number of sphere centers taken in total
+        num_centers = self.dataset.epoch_inds.shape[0]
+        # print(num_centers, self.dataset.potentials.shape[0])
 
-            # Number of sphere centers taken per class in each cloud
-            num_centers = self.dataset.epoch_inds.shape[0]
-
-            # Generate a list of indices balancing classes and respecting potentials
-            gen_indices = []
-            gen_classes = []
-            for i, c in enumerate(self.dataset.label_values):
-                if c not in self.dataset.ignored_labels:
-
-                    # Get the potentials of the frames containing this class
-                    class_potentials = self.dataset.potentials[self.dataset.class_frames[i]]
-
-                    # Get the indices to generate thanks to potentials
-                    used_classes = self.dataset.num_classes - len(self.dataset.ignored_labels)
-                    class_n = num_centers // used_classes + 1
-                    if class_n < class_potentials.shape[0]:
-                        _, class_indices = torch.topk(class_potentials, class_n, largest=False)
-                    else:
-                        class_indices = torch.zeros((0,), dtype=torch.int32)
-                        while class_indices.shape < class_n:
-                            new_class_inds = torch.randperm(class_potentials.shape[0])
-                            class_indices = torch.cat((class_indices, new_class_inds), dim=0)
-                        class_indices = class_indices[:class_n]
-                    class_indices = self.dataset.class_frames[i][class_indices]
-
-                    # Add the indices to the generated ones
-                    gen_indices.append(class_indices)
-                    gen_classes.append(class_indices * 0 + c)
-
-                    # Update potentials
-                    update_inds = torch.unique(class_indices)
-                    self.dataset.potentials[update_inds] = torch.ceil(self.dataset.potentials[update_inds])
-                    self.dataset.potentials[update_inds] += torch.from_numpy(np.random.rand(update_inds.shape[0]) * 0.1 + 0.1)
-
-            # Stack the chosen indices of all classes
-            gen_indices = torch.cat(gen_indices, dim=0)
-            gen_classes = torch.cat(gen_classes, dim=0)
-
-            # Shuffle generated indices
-            rand_order = torch.randperm(gen_indices.shape[0])[:num_centers]
-            gen_indices = gen_indices[rand_order]
-            gen_classes = gen_classes[rand_order]
-
-            # Update potentials (Change the order for the next epoch)
-            #self.dataset.potentials[gen_indices] = torch.ceil(self.dataset.potentials[gen_indices])
-            #self.dataset.potentials[gen_indices] += torch.from_numpy(np.random.rand(gen_indices.shape[0]) * 0.1 + 0.1)
-
-            # Update epoch inds
-            self.dataset.epoch_inds += gen_indices
-            # self.dataset.epoch_labels += gen_classes.type(torch.int32)
-
+        # Get the list of indices to generate thanks to potentials
+        if num_centers < self.dataset.potentials.shape[0]:
+            # means more data than the number of centers used
+            # pick top num_centers clouds
+            # gen_indices has the length of "num_centers"
+            _, gen_indices = torch.topk(self.dataset.potentials, num_centers, largest=False, sorted=True)
         else:
+            # means the whole dataset is finished without the necessary steps
+            gen_indices = torch.arange(0, self.dataset.potentials.shape[0])
 
-            # Initiate current epoch ind
-            self.dataset.epoch_i *= 0
-            self.dataset.epoch_inds *= 0
-            # self.dataset.epoch_labels *= 0
+        # Update potentials (Change the order for the next epoch)
+        self.dataset.potentials[gen_indices] = torch.ceil(self.dataset.potentials[gen_indices])
+        self.dataset.potentials[gen_indices] += torch.from_numpy(np.random.rand(gen_indices.shape[0]) * 0.1 + 0.1)
 
-            # Number of sphere centers taken in total
-            num_centers = self.dataset.epoch_inds.shape[0]
-            # print(num_centers, self.dataset.potentials.shape[0])
-
-            # Get the list of indices to generate thanks to potentials
-            if num_centers < self.dataset.potentials.shape[0]:
-                # means more data than the number of centers used
-                # pick top num_centers clouds
-                # gen_indices has the length of "num_centers"
-                _, gen_indices = torch.topk(self.dataset.potentials, num_centers, largest=False, sorted=True)
-            else:
-                # means the whole dataset is finished without the necessary steps
-                if self.dataset.set in ['training', 'validation']:
-                    gen_indices = torch.randperm(self.dataset.potentials.shape[0])
-                else:
-                    gen_indices = torch.arange(0, self.dataset.potentials.shape[0])
-
-            # Update potentials (Change the order for the next epoch)
-            self.dataset.potentials[gen_indices] = torch.ceil(self.dataset.potentials[gen_indices])
-            self.dataset.potentials[gen_indices] += torch.from_numpy(np.random.rand(gen_indices.shape[0]) * 0.1 + 0.1)
-
-            # append with -1, stop this epoch once -1 is used to fecth new batch
-            if num_centers >= self.dataset.potentials.shape[0]:
-                app_indices = torch.from_numpy(-1 * np.ones(num_centers-self.dataset.potentials.shape[0]).astype(np.int64) ) 
-                gen_indices = torch.cat((gen_indices, app_indices))
-            # print(self.dataset.potentials.shape[0])
-            print('num_centers =', num_centers)
-            # print(gen_indices)
-            # print(gen_indices.shape)
-            self.dataset.epoch_inds += gen_indices
-            print('epoch_inds:', self.dataset.epoch_inds)
+        # append with -1, stop this epoch once -1 is used to fecth new batch
+        if num_centers >= self.dataset.potentials.shape[0]:
+            app_indices = torch.from_numpy(-1 * np.ones(num_centers-self.dataset.potentials.shape[0]).astype(np.int64) ) 
+            gen_indices = torch.cat((gen_indices, app_indices))
+        # print(self.dataset.potentials.shape[0])
+        print('num_centers =', num_centers)
+        # print(gen_indices)
+        # print(gen_indices.shape)
+        self.dataset.epoch_inds += gen_indices
+        print('epoch_inds:', self.dataset.epoch_inds)
 
         # Generator loop
         for i in range(self.N):
@@ -854,10 +511,7 @@ class ScannetTripleSampler(Sampler):
             max_in_lim_dict = {}
 
         # Check if the max_in limit associated with current parameters exists
-        if self.dataset.balance_classes:
-            sampler_method = 'balanced'
-        else:
-            sampler_method = 'random'
+        sampler_method = 'random'
         key = '{:s}_{:.3f}_{:.3f}'.format(sampler_method,
                                           self.dataset.in_R,
                                           self.dataset.config.first_subsampling_dl)
@@ -933,10 +587,7 @@ class ScannetTripleSampler(Sampler):
                 pickle.dump(max_in_lim_dict, file)
 
         # Update value in config
-        if self.dataset.set == 'training':
-            config.max_in_points = self.dataset.max_in_p
-        else:
-            config.max_val_points = self.dataset.max_in_p
+        config.max_val_points = self.dataset.max_in_p
 
         print('Calibration done in {:.1f}s\n'.format(time.time() - t0))
         return
@@ -971,10 +622,7 @@ class ScannetTripleSampler(Sampler):
             batch_lim_dict = {}
 
         # Check if the batch limit associated with current parameters exists
-        if self.dataset.balance_classes:
-            sampler_method = 'balanced'
-        else:
-            sampler_method = 'random'
+        sampler_method = 'random'
         key = '{:s}_{:.3f}_{:.3f}_{:d}_{:d}'.format(sampler_method,
                                                     self.dataset.in_R,
                                                     self.dataset.config.first_subsampling_dl,
@@ -1216,9 +864,9 @@ class ScannetTripleSampler(Sampler):
         return
 
 
-class ScannetTripleCustomBatch:
+class VisualizationCustomBatch:
     """
-    Custom batch definition with memory pinning for ScannetTriple
+    Custom batch definition with memory pinning for Visualization
     Originally a custom batch only has information of 1 point cloud
     """
 
@@ -1381,8 +1029,8 @@ class ScannetTripleCustomBatch:
         return all_p_list
 
 
-def ScannetTripleCollate(batch_data):
-    return ScannetTripleCustomBatch(batch_data)
+def VisualizationCollate(batch_data):
+    return VisualizationCustomBatch(batch_data)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

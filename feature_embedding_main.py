@@ -58,7 +58,6 @@ if __name__ == '__main__':
     parser.add_argument('--optimiser', type=str, default='Adam', help='Choose the optimiser for training')
     parser.add_argument('--loss', type=str, default='lazy_quadruplet', help='Choose the loss function for training')
     parser.add_argument('--num_feat', type=int, default=3, help='How many block features to use [default: 5]')
-    parser.add_argument('--att_weights', dest='bAttW', action='store_true', help='Set to store attention weight maps')
     parser.add_argument('--no_att', dest='bNoAtt', action='store_true', help='Set not to use attention layers')
     parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--evaluate', dest='bEVAL', action='store_true', help='Set to evaluate the VLAD results')
@@ -70,14 +69,12 @@ if __name__ == '__main__':
         print('Optimiser:', FLAGS.optimiser)
         print('Loss function:', FLAGS.loss)
         print('Number of features:', FLAGS.num_feat)
-        print('Store attention weights:', FLAGS.bAttW)
         print('Use attention layers:', not FLAGS.bNoAtt)
         print('Use color information:', not FLAGS.bNoColor)
     else:
         print('Testing parameters load from files.')
         print('Loss function:', FLAGS.loss)
         print('Number of features:', FLAGS.num_feat)
-        print('Store attention weights:', FLAGS.bAttW)
         print('Use attention layers:', not FLAGS.bNoAtt)
         print('Use color information:', not FLAGS.bNoColor)
         print('Evaluation:', FLAGS.bEVAL)
@@ -104,8 +101,6 @@ if __name__ == '__main__':
     chkp_path = os.path.join(chosen_log, 'checkpoints')
     chkps = [f for f in os.listdir(chkp_path) if f[:4] == 'chkp']
     print('Found checkpoint(s):', chkps)
-    # print(np.sort(chkps)) # sort string in alphbatic order
-
     # Find which snapshot to restore
     if chkp_idx is None:
         chosen_chkp = 'current_chkp.tar'
@@ -172,7 +167,6 @@ if __name__ == '__main__':
         config.optimiser = FLAGS.optimiser
         config.loss = FLAGS.loss
         config.num_feat = FLAGS.num_feat
-        config.store_attention_weight = FLAGS.bAttW
         config.no_attention = FLAGS.bNoAtt
         config.no_color = FLAGS.bNoColor
         config.max_in_points = 9000
@@ -285,23 +279,20 @@ if __name__ == '__main__':
 
         print('Quadruplet loss, feat_num = 3')
         ## ACGiS-Net Logs
-        # chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
+        chosen_log = 'results/Recog_Log_2023-07-13_14-20-52'    # full model trained for 30 epochs
         # chosen_log = 'results/Recog_Log_2023-07-23_08-07-54'    # full model trained for 58 epochs
         ## CGiS-Net Logs
         # chosen_log = 'results/Recog_Log_2023-08-01_09-01-30'    # no attention trained for 30 epochs
         # chosen_log = 'results/Recog_Log_2021-08-29_13-46-24'    # default CGiS-Net with 5 feats
-        ## Test Config
-        chosen_log = 'results/Recog_Log_2021-08-29_13-46-24_paraTest'    # no attention trained for 30 epochs
 
         # Choose the index of the checkpoint to load OR None if you want to load the current checkpoint
-        chkp_idx = -1        # -1 for latest, None for current
+        chkp_idx = 3        # -1 for latest, None for current
         print('Chosen log:', chosen_log, 'chkp_idx=', chkp_idx)
 
         # Find all checkpoints in the chosen training folder
         chkp_path = os.path.join(chosen_log, 'checkpoints')
         chkps = [f for f in os.listdir(chkp_path) if f[:4] == 'chkp']
         print('Checkpoints found:', np.sort(chkps))
-        # print(np.sort(chkps)) # sort string in alphbatic order
 
         # Find which snapshot to restore
         if chkp_idx is None:
@@ -319,7 +310,7 @@ if __name__ == '__main__':
         # config.input_threads = 0
         config.print_current()
 
-        # Initialise segmentation network
+        # Initialise recognition network
         if config.no_attention:
             reg_net = PRNet(config)
         else:

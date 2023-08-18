@@ -40,18 +40,6 @@ class TransPRNet(nn.Module):
         # print(feature_size)
         # print(in_size)
 
-        # # FC layer stretching feat vector to the same dim
-        # # (N, *, H_in) -> (N, *, H_out)
-        # if self.num_feat == 5:
-        #     self.FC_1 = UnaryBlock(in_size, feature_size, False, 0)
-        #     self.FC_2 = UnaryBlock(in_size*2, feature_size, False, 0)
-        #     self.FC_3 = UnaryBlock(in_size*(2**2), feature_size, False, 0)
-        #     self.FC_4 = UnaryBlock(in_size*(2**3), feature_size, False, 0)
-        # elif self.num_feat == 3:
-        #     self.FC_3 = UnaryBlock(in_size*(2**2), feature_size, False, 0)
-        #     self.FC_4 = UnaryBlock(in_size*(2**3), feature_size, False, 0)
-        # elif self.num_feat == 1:
-        #     pass
         # Use transformer encoder block
         if self.num_feat == 3:      # trained with num_feat set to 5, actually using only 3 layers here (memory consideration)
             # actually using only 3 layers here (memory consideration)
@@ -67,7 +55,6 @@ class TransPRNet(nn.Module):
             raise ValueError('unsupport feature number')
         encoder_layer = nn.TransformerEncoderLayer(d_model=feature_size, nhead=4, dropout=0.1, activation='relu')
         self.TE = nn.TransformerEncoder(encoder_layer, num_layers=1)
-
 
         # NetVLAD layer
         cluster_size = 64  # K
@@ -128,7 +115,34 @@ class TransPRNet(nn.Module):
         # print('vlad vec size:', x.size())
 
         return x
-        # return x, att_w
+    
+    def get_attention_weights(self, feat_vec):
+        
+        if self.num_feat == 3:
+            # self attention on per-layer features
+            x_2, w_2 = self.TE_2(feat_vec[1])
+            x_4, w_4 = self.TE_4(feat_vec[3])
+            x_5, w_5 = self.TE_5(feat_vec[4])
+            print('x_size', x_2.size(), x_4.size(), x_5.size())
+            print('w_size', w_2.size(), w_4.size(), w_5.size())
+            x = torch.cat((x_2, x_4, x_5), 0)
+            att_w = [w_2, w_4, w_5]
+        elif self.num_feat == 1:
+            x, w_5 = self.TE_5(feat_vec[4])
+            att_w = [w_5]
+        else:
+            raise ValueError('unsupport feature number')
+        
+        # self attention on all features
+        x = self.TE(x)        
+        # print('feature size per layer:', x_2.size(), x_4.size(), x_5.size())
+        # print('cated feature size:', x.size())
+        
+        # get global descriptor
+        x = self.vlad_layer(x)
+        # print('vlad vec size:', x.size())
+
+        return x, att_w
     
     def loss(self, loss_function, a, p, n, n_star=None):
         if loss_function == 'LzQuad':
