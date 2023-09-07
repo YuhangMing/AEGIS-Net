@@ -57,7 +57,7 @@ if __name__ == '__main__':
     parser.add_argument('--test', dest='bTRAIN', action='store_false', help='Set to test the VLAD layers')
     parser.add_argument('--optimiser', type=str, default='Adam', help='Choose the optimiser for training')
     parser.add_argument('--loss', type=str, default='lazy_quadruplet', help='Choose the loss function for training')
-    parser.add_argument('--num_feat', type=int, default=3, help='How many block features to use [default: 5]')
+    parser.add_argument('--num_feat', type=int, default=3, help='How many block features to use [default: 3]')
     parser.add_argument('--no_att', dest='bNoAtt', action='store_true', help='Set not to use attention layers')
     parser.add_argument('--no_color', dest='bNoColor', action='store_true', help='Set not to use color in input point clouds')
     parser.add_argument('--evaluate', dest='bEVAL', action='store_true', help='Set to evaluate the VLAD results')
