@@ -94,6 +94,7 @@ python feature_embedding_main.py --test --evaluate --visualise
 Our AEGIS-Net is compared to a traditional baseline using SIFT+BoW, and 5 deep learning based method [NetVLAD](https://github.com/Nanne/pytorch-NetVlad), [PointNetVLAD](https://github.com/cattaneod/PointNetVlad-Pytorch), [MinkLoc3D](https://github.com/jac99/MinkLoc3D), Indoor DH3D and [CGiS-Net](https://github.com/YuhangMing/Semantic-Indoor-Place-Recognition).
 
 | Model \ Average Recall Rate | Top-1 | Top-2 | Top-3 | Epochs/Time Trained |
+| --------------------------- | ----- | ----- | ----- | ------------------- |
 | ACGiS-Net (default) | **65.09%** | **74.26%** | **79.06%** | 20 epochs (4 days) |
 | ACGiS-Net (no attention) | 55.13% | 66.19% | 71.95% | 20 epochs (4 days) |
 | CGiS-Net (default) | 56.82% | 66.46% | 71.74% | 20 epochs (7 days) |
