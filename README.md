@@ -93,20 +93,19 @@ python feature_embedding_main.py --test --evaluate --visualise
 
 Our AEGIS-Net is compared to a traditional baseline using SIFT+BoW, and 5 deep learning based method [NetVLAD](https://github.com/Nanne/pytorch-NetVlad), [PointNetVLAD](https://github.com/cattaneod/PointNetVlad-Pytorch), [MinkLoc3D](https://github.com/jac99/MinkLoc3D), Indoor DH3D and [CGiS-Net](https://github.com/YuhangMing/Semantic-Indoor-Place-Recognition).
 
-| Model \ Recall           |   Top-1    |   Top-2    |   Top-3    | Epochs/Time Trained |  Device                 |
+| Model \ Average Recall Rate |   Top-1    |   Top-2    |   Top-3    | Epochs/Time Trained |  Device                 |
 | *Our Models* |
 | ACGiS-Net (default)      | **65.09%** | **74.26%** | **79.06%** | 20 epochs (4 days)  | NVIDIA GeForce RTX 4090 |
 | ACGiS-Net (no attention) |   55.13%   |   66.19%   |   71.95%   | 20 epochs (4 days)  | NVIDIA GeForce RTX 4090 |
-| *NOTE*: ACGiS-Net (no attention) = CGiS-Net (3 feats, using feat 2, 4, 5) |
 | CGiS-Net (default)       |   56.82%   |   66.46%   |   71.74%   | 20 epochs (7 days)  | NVIDIA TITAN X          |
 | CGiS-Net (default)       |   61.12%   |   70.23%   |   75.06%   | 60 epochs (21 days) | NVIDIA TITAN X          |
-| *Comparisons from CGiS-Net Paper* |
 | SIFT + BoW               |   16.16%   |   21.17%   |   24.38%   | -                   | -                       |
 | NetVLAD                  |   21.77%   |   33.81%   |   41.49%   | -                   | NVIDIA TITAN X          |
 | PointNetVLAD             |   5.31%    |   7.50%    |   9.99%    | -                   | NVIDIA TITAN X          |
 | MinkLoc3D                |   3.32%    |   5.81%    |   8.27%    | -                   | NVIDIA TITAN X          |
 | Indoor DH3D              |   16.10%   |   21.92%   |   25.30%   | -                   | NVIDIA TITAN X          |
 
+*NOTE*: ACGiS-Net (no attention) = CGiS-Net (3 feats, using feat 2, 4, 5)
 ![Results](./doc/results.png)
 
 
