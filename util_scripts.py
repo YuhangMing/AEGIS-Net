@@ -36,6 +36,32 @@ if __name__ == '__main__':
     '''
     Check #### xxx #### for the function of each code block.
     '''
+
+    #### Visualize a sinlgle pcd ####
+    scene_id = '770'
+    id='1140'
+    scene='scene0'+scene_id+'_00'
+    
+    # ply file
+    pcd_file = '/media/yohann/ScanNet/place_recognition/scans/'+scene+'/input_pcd_0mean/'+scene+'_'+id+'_sub.ply'
+    o3dpcd00 = o3d.io.read_point_cloud(pcd_file)
+
+    # # bin file
+    # pcd_file = '/media/yohann/ScanNet/place_recognition/scans/'+scene+'/pnvlad_pcd/'+scene+'_'+id+'_sub.bin'    
+    # points = np.fromfile(pcd_file)
+    # points = points.reshape((points.shape[0]//3, 3))
+    # o3dpcd00 = o3d.geometry.PointCloud()
+    # o3dpcd00.points = o3d.utility.Vector3dVector(points)
+    
+    vis0 = o3d.visualization.Visualizer()
+    vis0.create_window(window_name='pcd', width=480, height=640, left=0, top=0)
+    vis0.add_geometry(o3dpcd00)
+    while True:
+        vis0.update_geometry(o3dpcd00)
+        if not vis0.poll_events():
+            break
+    
+    exit()
     
     #### Plot Legends ####
     dataset = 'ScanNet'
